@@ -121,7 +121,7 @@ class DateRangeForm(forms.Form):
             'class': 'form-control',
             'type': 'date'
         }),
-        initial=date.today - timedelta(days=30)
+        initial=date.today() - timedelta(days=30)
     )
     
     date_to = forms.DateField(
@@ -130,7 +130,7 @@ class DateRangeForm(forms.Form):
             'class': 'form-control',
             'type': 'date'
         }),
-        initial=date.today
+        initial=date.today()
     )
     
     member_type = forms.ChoiceField(
@@ -184,7 +184,7 @@ class BulkCheckinForm(forms.Form):
             'class': 'form-control',
             'type': 'date'
         }),
-        initial=date.today
+        initial=date.today()
     )
     
     notes = forms.CharField(
@@ -233,7 +233,6 @@ class SettingsForm(forms.Form):
         min_value=0.3,
         max_value=0.9,
         initial=0.6,
-        step=0.05,
         widget=forms.NumberInput(attrs={'class': 'form-control', 'step': 0.05}),
         label="Face Recognition Threshold"
     )

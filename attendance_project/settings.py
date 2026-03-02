@@ -1,10 +1,13 @@
 """
 Django settings for attendance_project project.
 """
-
+import sys
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Add the project root to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load environment variables
 load_dotenv()
@@ -53,7 +56,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'attendance_app.middleware.OnlineStatusMiddleware',
-    'attendance_app.middleware.SystemHealthMiddleware',
+    #'attendance_app.middleware.SystemHealthMiddleware',
 ]
 
 ROOT_URLCONF = 'attendance_project.urls'

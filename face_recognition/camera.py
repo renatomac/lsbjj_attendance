@@ -128,20 +128,53 @@ class FaceRecognizer:
         self.threshold = settings.FACE_RECOGNITION_THRESHOLD
         
     def load_known_faces(self):
-        """Load all registered faces from database"""
-        from attendance_app.models import LocalMember
-        
-        self.known_face_encodings = []
-        self.known_face_member_ids = []
-        
-        members = LocalMember.objects.filter(face_registered=True)
-        for member in members:
-            encoding = member.load_face_encoding()
-            if encoding is not None:
-                self.known_face_encodings.append(encoding)
-                self.known_face_member_ids.append(member.id)
-        
-        logger.info(f"Loaded {len(self.known_face_encodings)} known faces")
+        """Load known faces from database"""
+        try:
+            # Check if table exists first
+            from django.db import connection
+            from django.apps import apps
+            
+            # Check if the LocalMember table exists
+            table_name = 'attendance_app_localmember'
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT name FROM sqlite_master 
+                    WHERE type='table' AND name=%s
+                """, [table_name])
+                table_exists = cursor.fetchone() is not None
+            
+            if not table_exists:
+                print("LocalMember table doesn't exist yet - skipping face loading")
+                return
+            
+            # Only import models if table exists
+            from attendance_app.models import LocalMember
+            
+            # Get members with registered faces
+            members = LocalMember.objects.filter(face_registered=True)
+            
+            self.known_face_encodings = []
+            self.known_face_member_ids = []
+            self.known_face_names = []
+            
+            for member in members:
+                try:
+                    encoding = member.load_face_encoding()
+                    if encoding is not None:
+                        self.known_face_encodings.append(encoding)
+                        self.known_face_member_ids.append(member.id)
+                        self.known_face_names.append(member.full_name)
+                except Exception as e:
+                    print(f"Error loading face for {member.full_name}: {e}")
+            
+            print(f"Loaded {len(self.known_face_encodings)} known faces")
+            
+        except Exception as e:
+            print(f"Error in load_known_faces: {e}")
+            # Initialize empty lists as fallback
+            self.known_face_encodings = []
+            self.known_face_member_ids = []
+            self.known_face_names = []
     
     def register_face(self, member_id, num_photos=5):
         """Register face for a member"""

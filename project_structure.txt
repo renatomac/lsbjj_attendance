@@ -1,0 +1,41 @@
+.
+├── asgi.py
+├── attendance_app
+│   ├── admin.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── __init__.py
+│   ├── models.py
+│   ├── serializers.py
+│   ├── static
+│   │   └── attendance_app
+│   ├── templates
+│   │   └── attendance_app
+│   ├── urls_api.py
+│   ├── urls.py
+│   └── views.py
+├── attendance_project
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── face_recognition
+│   ├── camera.py
+│   ├── __init__.py
+│   ├── recognizer.py
+│   └── trainer.py
+├── manage.py
+├── project_structure.txt
+├── README.md
+├── requirements.txt
+├── scripts
+│   ├── example.conf
+│   ├── install.sh
+│   ├── nginx.conf
+│   └── start_service.sh
+└── sync
+    ├── __init__.py
+    ├── sync_client.py
+    └── sync_members.py
+
+10 directories, 29 files
