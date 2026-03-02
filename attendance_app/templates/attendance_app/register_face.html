@@ -1,0 +1,278 @@
+{% extends 'attendance_app/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Register Face{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-face-smile"></i> Register Face for Member
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Progress Steps -->
+                <div class="steps mb-4">
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <div class="step active">1</div>
+                            <small>Select Member</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="step" id="step2">2</div>
+                            <small>Capture Photos</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="step" id="step3">3</div>
+                            <small>Complete</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 1: Member Selection -->
+                <div id="step1-content">
+                    <form method="post" id="register-form">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            We'll take {{ form.num_photos.value|default:5 }} photos of the member's face from different angles.
+                            Make sure the lighting is good and the face is clearly visible.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-camera"></i> Start Registration
+                        </button>
+                        <a href="{% url 'members_list' %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+                
+                <!-- Step 2: Camera Capture (hidden initially) -->
+                <div id="step2-content" style="display: none;">
+                    <div class="text-center mb-3">
+                        <h5 id="capture-status">Preparing camera...</h5>
+                        <div class="progress mb-3">
+                            <div id="capture-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-container text-center mb-3">
+                        <img id="preview" src="" alt="Camera Preview" class="img-fluid rounded" style="max-width: 100%;">
+                    </div>
+                    
+                    <div class="text-center">
+                        <button id="cancel-capture" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Completion (hidden initially) -->
+                <div id="step3-content" style="display: none;">
+                    <div class="text-center">
+                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                        <h4 id="completion-message">Face Registration Complete!</h4>
+                        <p id="completion-details"></p>
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'register_face' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Register Another
+                            </a>
+                            <a href="{% url 'members_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-users"></i> View Members
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Card -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Face Registration Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h3>{{ total_registered }}</h3>
+                        <small>Total Registered</small>
+                    </div>
+                    <div class="col-4">
+                        <h3>{{ pending_members.count }}</h3>
+                        <small>Pending Registration</small>
+                    </div>
+                    <div class="col-4">
+                        <h3>{{ recently_registered.count }}</h3>
+                        <small>Recent Registrations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recently Registered -->
+        {% if recently_registered %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Recently Registered</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for member in recently_registered %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ member.full_name }}</strong>
+                                <span class="badge bg-{{ member.belt_rank }} ms-2">
+                                    {{ member.get_belt_rank_display }}
+                                </span>
+                                <br>
+                                <small class="text-muted">
+                                    {{ member.face_photos_count }} photos · 
+                                    {{ member.updated_at|timesince }} ago
+                                </small>
+                            </div>
+                            <span class="badge bg-success">
+                                <i class="fas fa-check"></i> Registered
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Tips Card -->
+        <div class="card mt-3 bg-light">
+            <div class="card-body">
+                <h6><i class="fas fa-lightbulb text-warning"></i> Tips for Best Results:</h6>
+                <ul class="mb-0">
+                    <li>Ensure good, even lighting on the face</li>
+                    <li>Remove sunglasses, hats, or face coverings</li>
+                    <li>Look directly at the camera</li>
+                    <li>Take photos from slightly different angles</li>
+                    <li>Make sure the face is clearly visible</li>
+                    <li>Avoid extreme facial expressions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let mediaStream = null;
+        let videoElement = null;
+        let canvas = document.createElement('canvas');
+        let capturedPhotos = [];
+        let currentStep = 1;
+        let targetPhotos = {{ form.num_photos.value|default:5 }};
+        
+        // Handle form submission
+        $('#register-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Start camera and move to step 2
+            startCamera();
+        });
+        
+        function startCamera() {
+            $('#step1-content').hide();
+            $('#step2-content').show();
+            currentStep = 2;
+            
+            // Initialize camera
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    mediaStream = stream;
+                    videoElement = document.createElement('video');
+                    videoElement.srcObject = stream;
+                    videoElement.play();
+                    
+                    // Start capture process
+                    setTimeout(capturePhotos, 2000);
+                })
+                .catch(function(error) {
+                    alert('Could not access camera: ' + error.message);
+                    cancelRegistration();
+                });
+        }
+        
+        function capturePhotos() {
+            let photosTaken = 0;
+            
+            function takePhoto() {
+                if (photosTaken >= targetPhotos) {
+                    completeRegistration();
+                    return;
+                }
+                
+                photosTaken++;
+                $('#capture-status').text(`Capturing photo ${photosTaken}/${targetPhotos}...`);
+                $('#capture-progress').css('width', (photosTaken / targetPhotos * 100) + '%');
+                
+                // Capture frame
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                canvas.getContext('2d').drawImage(videoElement, 0, 0);
+                
+                // Convert to data URL
+                const photoData = canvas.toDataURL('image/jpeg');
+                capturedPhotos.push(photoData);
+                
+                // Update preview
+                $('#preview').attr('src', photoData);
+                
+                // Schedule next photo
+                setTimeout(takePhoto, 1000);
+            }
+            
+            takePhoto();
+        }
+        
+        function completeRegistration() {
+            // Stop camera
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Send photos to server
+            $.ajax({
+                url: '{% url "face_registration_complete" %}',
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    member_id: $('#id_member').val(),
+                    photos: JSON.stringify(capturedPhotos)
+                },
+                success: function(response) {
+                    $('#step2-content').hide();
+                    $('#step3-content').show();
+                    $('#completion-message').text('Registration Successful!');
+                    $('#completion-details').text(
+                        `Registered ${response.photos_successful} photos for ${response.member_name}`
+                    );
+                },
+                error: function(xhr) {
+                    alert('Error: ' + xhr.responseJSON.error);
+                    cancelRegistration();
+                }
+            });
+        }
+        
+        function cancelRegistration() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            window.location.href = '{% url "register_face" %}';
+        }
+        
+        $('#cancel-capture').on('click', cancelRegistration);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'attendance_app/base.html' %}
+{% load static %}
+
+{% block title %}Face Recognition Check-in{% endblock %}
+
+{% block extra_css %}
+<style>
+    #camera-feed {
+        width: 100%;
+        max-width: 640px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .result-card {
+        transition: all 0.3s ease;
+    }
+    
+    .success-card {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .error-card {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+    
+    .belt-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+    }
+    
+    .belt-white { background: #f8f9fa; color: #212529; }
+    .belt-blue { background: #007bff; color: white; }
+    .belt-purple { background: #6f42c1; color: white; }
+    .belt-brown { background: #8b4513; color: white; }
+    .belt-black { background: #343a40; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-camera"></i> Face Recognition Check-in
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <!-- Camera Feed -->
+                <div class="camera-container mb-4">
+                    <img id="camera-feed" src="{% url 'video_feed' %}" alt="Camera Feed" class="img-fluid">
+                </div>
+                
+                <!-- Status -->
+                <div id="status" class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle"></i> Position your face in the camera and click "Check In"
+                </div>
+                
+                <!-- Check-in Button -->
+                <button id="checkin-btn" class="btn btn-success btn-lg mb-4">
+                    <i class="fas fa-camera"></i> Check In Now
+                </button>
+                
+                <!-- Result Card -->
+                <div id="result-card" class="card result-card d-none">
+                    <div class="card-body">
+                        <div id="result-content"></div>
+                    </div>
+                </div>
+                
+                <!-- Recent Face Check-ins -->
+                <div class="mt-4">
+                    <h5>Recent Face Check-ins</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Member</th>
+                                    <th>Belt</th>
+                                    <th>Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-checkins">
+                                <!-- Will be populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instructions Modal -->
+<div class="modal fade" id="instructionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">How to use Face Check-in</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ol>
+                    <li>Position yourself in front of the camera</li>
+                    <li>Ensure good lighting on your face</li>
+                    <li>Remove sunglasses or face coverings</li>
+                    <li>Look directly at the camera</li>
+                    <li>Click the "Check In Now" button</li>
+                    <li>Wait for the system to recognize you</li>
+                </ol>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Make sure your face is registered in the system first!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'attendance_app/js/face-checkin.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        const faceCheckin = new FaceCheckin({
+            checkinUrl: '{% url "face_checkin_api" %}',
+            recentUrl: '{% url "api_recent_face_checkins" %}',
+            checkinBtn: '#checkin-btn',
+            statusEl: '#status',
+            resultCard: '#result-card',
+            resultContent: '#result-content',
+            recentTable: '#recent-checkins'
+        });
+        
+        // Show instructions on first visit
+        if (!localStorage.getItem('faceCheckinSeen')) {
+            $('#instructionsModal').modal('show');
+            localStorage.setItem('faceCheckinSeen', 'true');
+        }
+    });
+</script>
+{% endblock %}

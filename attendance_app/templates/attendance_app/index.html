@@ -1,0 +1,325 @@
+{% extends 'attendance_app/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Welcome Banner -->
+    <div class="col-12 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2><i class="fas fa-dumbbell"></i> Welcome back, {{ request.user.first_name|default:request.user.username }}!</h2>
+                        <p class="mb-0">{{ today|date:"l, F j, Y" }}</p>
+                    </div>
+                    <div class="text-end">
+                        <h1 class="display-4">{{ today_attendance }}</h1>
+                        <p class="mb-0">Check-ins Today</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Active Members</h6>
+                        <h2 class="mb-0">{{ stats.active_members }}</h2>
+                    </div>
+                    <i class="fas fa-users fa-3x opacity-50"></i>
+                </div>
+                <small>{{ stats.inactive_members }} inactive</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Today's Check-ins</h6>
+                        <h2 class="mb-0">{{ stats.today_attendance }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                </div>
+                <small>{{ stats.week_attendance }} this week</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Face Registered</h6>
+                        <h2 class="mb-0">{{ stats.face_registered }}</h2>
+                    </div>
+                    <i class="fas fa-face-smile fa-3x opacity-50"></i>
+                </div>
+                <small>{{ stats.face_pending }} pending</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Pending Sync</h6>
+                        <h2 class="mb-0">{{ pending_sync }}</h2>
+                    </div>
+                    <i class="fas fa-sync fa-3x opacity-50"></i>
+                </div>
+                <small>Last sync: {{ last_sync.start_time|timesince|default:'Never' }} ago</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Charts Row -->
+    <div class="col-md-8 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Today's Check-ins by Hour
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hourlyChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie"></i> Member Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="memberTypeChart" height="200"></canvas>
+                <hr>
+                <div class="text-center">
+                    <span class="badge bg-primary">Adults: {{ stats.adults }}</span>
+                    <span class="badge bg-success">Children: {{ stats.children }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Activity -->
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock"></i> Recent Check-ins
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for attendance in recent_attendance %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ attendance.member.full_name }}</strong>
+                                    <span class="badge bg-{{ attendance.member.belt_rank }} ms-2">
+                                        {{ attendance.member.get_belt_rank_display }}
+                                        {% if attendance.member.stripes %}
+                                            {{ '⭐'|repeat:attendance.member.stripes }}
+                                        {% endif %}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-{{ attendance.check_in_method }}"></i>
+                                        {{ attendance.get_check_in_method_display }}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <strong>{{ attendance.check_in_time|date:"H:i" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ attendance.check_in_time|timesince }} ago</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="list-group-item text-center text-muted">
+                            No check-ins yet today
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'manual_checkin' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> New Check-in
+                </a>
+                <a href="{% url 'reports' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-chart-bar"></i> View Reports
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions & Notifications -->
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="{% url 'manual_checkin' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-keyboard"></i> Manual Check-in
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'face_checkin' %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-camera"></i> Face Check-in
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'register_face' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-face-smile"></i> Register Face
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'members_list' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-users"></i> View Members
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notifications -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell"></i> Notifications
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                        <div class="list-group-item list-group-item-{{ notification.notification_type }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ notification.title }}</h6>
+                                <small>{{ notification.created_at|timesince }} ago</small>
+                            </div>
+                            <p class="mb-1">{{ notification.message }}</p>
+                        </div>
+                    {% empty %}
+                        <div class="list-group-item text-center text-muted">
+                            No new notifications
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Health -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heartbeat"></i> System Health
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-camera me-2 {% if system_health.camera %}text-success{% else %}text-danger{% endif %}"></i>
+                            <span>Camera: {% if system_health.camera %}OK{% else %}Error{% endif %}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-wifi me-2 {% if system_health.network %}text-success{% else %}text-danger{% endif %}"></i>
+                            <span>Network: {% if system_health.network %}OK{% else %}Offline{% endif %}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-database me-2 {% if system_health.storage %}text-success{% else %}text-warning{% endif %}"></i>
+                            <span>Storage: {{ system_health.storage_used }}%</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-microchip me-2 text-info"></i>
+                            <span>CPU: {{ system_health.cpu }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Hourly Chart
+    const hourlyData = {{ hourly_checkins|safe }};
+    const ctx1 = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: hourlyData.map(d => d.hour),
+            datasets: [{
+                label: 'Check-ins',
+                data: hourlyData.map(d => d.count),
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                fill: true,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    stepSize: 1
+                }
+            }
+        }
+    });
+    
+    // Member Type Chart
+    const ctx2 = document.getElementById('memberTypeChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Adults', 'Children'],
+            datasets: [{
+                data: [{{ stats.adults }}, {{ stats.children }}],
+                backgroundColor: ['#007bff', '#28a745']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+{% endblock %}

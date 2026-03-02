@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" {% if request.session.dark_mode %}data-bs-theme="dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BJJ Attendance System - {% block title %}Dashboard{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'attendance_app/css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="fas fa-dumbbell"></i> BJJ Attendance
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" 
+                           href="{% url 'index' %}">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-sign-in-alt"></i> Check-in
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'manual_checkin' %}">
+                                    <i class="fas fa-keyboard"></i> Manual Check-in
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'face_checkin' %}">
+                                    <i class="fas fa-camera"></i> Face Recognition
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'bulk_checkin' %}">
+                                    <i class="fas fa-users"></i> Bulk Check-in
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'members_list' %}active{% endif %}" 
+                           href="{% url 'members_list' %}">
+                            <i class="fas fa-users"></i> Members
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'register_face' %}active{% endif %}" 
+                           href="{% url 'register_face' %}">
+                            <i class="fas fa-face-smile"></i> Register Face
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" 
+                           href="{% url 'reports' %}">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'sync_status' %}active{% endif %}" 
+                           href="{% url 'sync_status' %}">
+                            <i class="fas fa-sync"></i> Sync
+                            {% if pending_sync %}
+                                <span class="badge bg-warning">{{ pending_sync }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Right side nav -->
+                <ul class="navbar-nav">
+                    <!-- Online/Offline indicator -->
+                    <li class="nav-item">
+                        <span class="nav-link" id="online-status">
+                            <i class="fas fa-circle" style="color: {% if online_status %}#28a745{% else %}#dc3545{% endif %};"></i>
+                            {% if online_status %}Online{% else %}Offline{% endif %}
+                        </span>
+                    </li>
+                    
+                    <!-- Notifications -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_notifications %}
+                                <span class="badge bg-danger">{{ unread_notifications }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for notification in notifications %}
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <small class="text-muted">{{ notification.created_at|timesince }} ago</small><br>
+                                        <strong>{{ notification.title }}</strong><br>
+                                        {{ notification.message|truncatechars:50 }}
+                                    </a>
+                                </li>
+                            {% empty %}
+                                <li><span class="dropdown-item text-muted">No notifications</span></li>
+                            {% endfor %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">View All</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- User menu -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> {{ request.user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'profile' %}">
+                                    <i class="fas fa-id-card"></i> Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'change_password' %}">
+                                    <i class="fas fa-key"></i> Change Password
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'system_settings' %}">
+                                    <i class="fas fa-cog"></i> Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="container-fluid py-3">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">
+                BJJ Attendance System v1.0 | 
+                <i class="fas fa-raspberry-pi"></i> Raspberry Pi | 
+                <i class="fas fa-sync"></i> Last sync: {{ last_sync.start_time|timesince|default:'Never' }} ago
+            </span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{% static 'attendance_app/js/main.js' %}"></script>
+    
+    <!-- Online status checker -->
+    <script>
+        function checkOnlineStatus() {
+            fetch('/api/health/')
+                .then(response => {
+                    const status = response.ok;
+                    const indicator = document.getElementById('online-status');
+                    if (indicator) {
+                        indicator.innerHTML = status ? 
+                            '<i class="fas fa-circle" style="color: #28a745;"></i> Online' : 
+                            '<i class="fas fa-circle" style="color: #dc3545;"></i> Offline';
+                    }
+                })
+                .catch(() => {
+                    const indicator = document.getElementById('online-status');
+                    if (indicator) {
+                        indicator.innerHTML = '<i class="fas fa-circle" style="color: #dc3545;"></i> Offline';
+                    }
+                });
+        }
+        
+        // Check every 30 seconds
+        setInterval(checkOnlineStatus, 30000);
+        checkOnlineStatus();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
