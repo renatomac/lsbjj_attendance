@@ -1106,3 +1106,46 @@ def api_today_stats(request):
             'method': r.get_check_in_method_display()
         } for r in recent]
     })
+    
+    
+def test_simple_login(request):
+    """Super simple login view for testing"""
+    from django.contrib.auth import authenticate, login
+    from django.http import HttpResponse
+    
+    print("=" * 50)
+    print("Simple test login called")
+    print(f"Method: {request.method}")
+    
+    if request.method == 'POST':
+        print("POST data:", request.POST)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        print(f"Username: {username}, Password: {'*' * len(password) if password else 'None'}")
+        
+        user = authenticate(request, username=username, password=password)
+        print(f"Authenticated user: {user}")
+        
+        if user:
+            login(request, user)
+            return redirect('index')
+        else:
+            return HttpResponse("Login failed", status=401)
+    
+    # Simple HTML form
+    html = """
+    <html>
+    <body>
+        <h2>Simple Test Login</h2>
+        <form method="post">
+            <input type="text" name="username" placeholder="Username"><br>
+            <input type="password" name="password" placeholder="Password"><br>
+            <button type="submit">Login</button>
+        </form>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
+
+def test_template(request):
+    return render(request, 'test/minimal.html')

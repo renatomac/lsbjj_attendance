@@ -1,0 +1,76 @@
+{% extends 'attendance_app/base.html' %}
+
+{% block title %}Manual Check-in{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-md-8 offset-md-2">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">Manual Check-in</h5>
+			</div>
+			<div class="card-body">
+				<form method="post">
+					{% csrf_token %}
+					{{ form.member_id }}
+
+					<div class="mb-3">
+						<label for="member-search" class="form-label">Find Member</label>
+						<input id="member-search" class="form-control" placeholder="Type member name to search..." autocomplete="off">
+						<div id="member-results" class="list-group mt-2"></div>
+					</div>
+
+					<div class="mb-3">
+						{{ form.notes.label_tag }}
+						{{ form.notes }}
+					</div>
+
+					<div class="d-flex justify-content-end">
+						<button class="btn btn-primary" type="submit">Check In</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% block extra_js %}
+<script>
+// Simple member search to populate hidden member_id field (AJAX optional)
+document.addEventListener('DOMContentLoaded', function(){
+	const search = document.getElementById('member-search');
+	const results = document.getElementById('member-results');
+	const memberIdInput = document.getElementById('id_member_id');
+
+	let timeout = null;
+	search.addEventListener('input', function(){
+		clearTimeout(timeout);
+		const q = this.value.trim();
+		if(!q){ results.innerHTML = ''; return; }
+		timeout = setTimeout(()=>{
+			fetch(`/api/members/search/?q=${encodeURIComponent(q)}`)
+				.then(r=>r.json())
+				.then(data=>{
+					results.innerHTML = '';
+					data.forEach(m=>{
+						const a = document.createElement('a');
+						a.href = '#';
+						a.className = 'list-group-item list-group-item-action';
+						a.textContent = `${m.last_name}, ${m.first_name} (${m.id})`;
+						a.dataset.id = m.id;
+						a.addEventListener('click', function(e){
+							e.preventDefault();
+							memberIdInput.value = this.dataset.id;
+							search.value = this.textContent;
+							results.innerHTML = '';
+						});
+						results.appendChild(a);
+					});
+				}).catch(()=>{ results.innerHTML = '<div class="text-muted small">Search failed</div>'; });
+		}, 300);
+	});
+});
+</script>
+{% endblock %}
+
+{% endblock %}

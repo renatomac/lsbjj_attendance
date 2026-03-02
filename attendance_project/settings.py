@@ -56,7 +56,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'attendance_app.middleware.OnlineStatusMiddleware',
-    #'attendance_app.middleware.SystemHealthMiddleware',
+    'attendance_app.middleware.SystemHealthMiddleware',
 ]
 
 ROOT_URLCONF = 'attendance_project.urls'
@@ -74,6 +74,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'attendance_app.context_processors.system_status',
                 'attendance_app.context_processors.notifications',
+                'attendance_app.context_processors.custom_context',
             ],
         },
     },
@@ -114,10 +115,16 @@ TIME_ZONE = 'America/Chicago'  # Adjust for your location
 USE_I18N = True
 USE_TZ = True
 
+
+
+
+
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'attendance_app/static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files
 MEDIA_URL = '/media/'
@@ -159,7 +166,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # PythonAnywhere Sync Settings
-PYTHONANYWHERE_URL = os.environ.get('PYTHONANYWHERE_URL', 'https://yourusername.pythonanywhere.com')
+PYTHONANYWHERE_URL = os.environ.get('PYTHONANYWHERE_URL', 'https://checkmatlakezurich.com')
 PYTHONANYWHERE_API_KEY = os.environ.get('PYTHONANYWHERE_API_KEY', '')
 SYNC_INTERVAL = 300  # seconds
 MEMBER_SYNC_HOUR = 3  # 3 AM
@@ -250,3 +257,29 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+    
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',  # Only show warnings and errors
+    },
+    'loggers': {
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',  # Show HTTP requests (GET/POST)
+            'propagate': False,
+        },
+        'django.utils.autoreload': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Suppress autoreload messages
+            'propagate': False,
+        },
+    },
+}

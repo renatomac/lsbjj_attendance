@@ -1,4 +1,5 @@
 {% extends 'attendance_app/base.html' %}
+{% load attendance_extras %}
 {% load static %}
 
 {% block title %}Dashboard{% endblock %}
@@ -140,7 +141,7 @@
                                     <span class="badge bg-{{ attendance.member.belt_rank }} ms-2">
                                         {{ attendance.member.get_belt_rank_display }}
                                         {% if attendance.member.stripes %}
-                                            {{ '⭐'|repeat:attendance.member.stripes }}
+                                            {% if attendance.member.stripes %}({{ attendance.member.stripes }}⭐){% endif %}
                                         {% endif %}
                                     </span>
                                     <br>

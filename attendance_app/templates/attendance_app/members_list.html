@@ -1,0 +1,50 @@
+{% extends 'attendance_app/base.html' %}
+
+{% block title %}Members{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header d-flex justify-content-between align-items-center">
+				<h5 class="mb-0">Members</h5>
+				<a href="{% url 'register_member' %}" class="btn btn-sm btn-primary">Add Member</a>
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>#</th>
+								<th>Name</th>
+								<th>Belt</th>
+								<th>Type</th>
+								<th>Face Registered</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for member in members %}
+								<tr>
+									<td>{{ member.id }}</td>
+									<td>{{ member.last_name }}, {{ member.first_name }}</td>
+									<td>{{ member.belt_rank }}</td>
+									<td>{{ member.member_type }}</td>
+									<td>{% if member.face_registered %}Yes{% else %}No{% endif %}</td>
+									<td>
+										<a href="{% url 'member_detail' member.id %}" class="btn btn-sm btn-outline-secondary">View</a>
+									</td>
+								</tr>
+							{% empty %}
+								<tr>
+									<td colspan="6" class="text-center text-muted">No members found.</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

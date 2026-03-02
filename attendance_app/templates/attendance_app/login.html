@@ -1,0 +1,44 @@
+{% extends 'attendance_app/base.html' %}
+{% load attendance_extras %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+	<div class="col-md-4">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">Login</h5>
+			</div>
+			<div class="card-body">
+				<form method="post" novalidate>
+					{% csrf_token %}
+					{% for hidden in form.hidden_fields %}
+						{{ hidden }}
+					{% endfor %}
+
+					<div class="mb-3">
+						{{ form.username.label_tag }}
+						{{ form.username }}
+						{% if form.username.errors %}
+							<div class="text-danger small">{{ form.username.errors }}</div>
+						{% endif %}
+					</div>
+
+					<div class="mb-3">
+						{{ form.password.label_tag }}
+						{{ form.password }}
+						{% if form.password.errors %}
+							<div class="text-danger small">{{ form.password.errors }}</div>
+						{% endif %}
+					</div>
+
+					<div class="d-grid">
+						<button type="submit" class="btn btn-primary">Sign In</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

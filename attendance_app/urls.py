@@ -44,4 +44,7 @@ urlpatterns = [
     path('health/', views.system_health, name='system_health'),
     path('camera/test/', views.camera_test, name='camera_test'),
     path('backup/create/', views.create_backup_view, name='create_backup'),
+    
+    path('test-login/', views.test_simple_login, name='test_login'),
+    path('test-template/', views.test_template, name='test_template'),
 ]
