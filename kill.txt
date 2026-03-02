@@ -1,0 +1,16 @@
+# Find all Python processes
+ps aux | grep python
+
+# Look for processes with "manage.py" or "runserver"
+# Then kill them specifically:
+
+# Kill all runserver processes
+pkill -f "manage.py runserver"
+
+# If that doesn't work, try a more aggressive approach
+pkill -9 -f "python manage.py"
+
+# Also kill any other Python processes that might be holding the port
+pkill -9 -f "gunicorn"  # if you're using gunicorn
+
+pkill -f "manage.py runserver" || true
