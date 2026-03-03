@@ -14,3 +14,13 @@ pkill -9 -f "python manage.py"
 pkill -9 -f "gunicorn"  # if you're using gunicorn
 
 pkill -f "manage.py runserver" || true
+
+
+# Find the process using port 8000
+sudo lsof -i :8000
+
+# Or use netstat
+sudo netstat -tulpn | grep :8000
+
+# Kill the process (replace PID with the actual process ID)
+sudo kill -9 <PID>

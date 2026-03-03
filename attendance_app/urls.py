@@ -24,12 +24,16 @@ urlpatterns = [
     
     # Members
     path('members/', views.members_list, name='members_list'),
+    path('members/register/', views.register_member, name='register_member'),
     path('member/<int:member_id>/', views.member_detail, name='member_detail'),
     path('member/<int:member_id>/edit/', views.member_edit, name='member_edit'),
     
     # Face registration
     path('face/register/', views.register_face, name='register_face'),
     path('face/status/<int:member_id>/', views.face_registration_status, name='face_registration_status'),
+    
+    # API endpoints
+    path('api/recent-face-checkins/', views.api_recent_face_checkins, name='api_recent_face_checkins'),
     
     # Reports
     path('reports/', views.reports, name='reports'),

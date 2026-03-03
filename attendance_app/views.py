@@ -40,9 +40,20 @@ logger = logging.getLogger(__name__)
 face_recognizer = FaceRecognizer()
 face_recognizer.load_known_faces()
 
-# Initialize camera for streaming
+# Initialize camera for streaming (lazy - will be initialized on first use)
 camera = CameraManager()
-camera.initialize_camera()
+_camera_initialized = False
+
+def ensure_camera_initialized():
+    """Ensure camera is initialized before use"""
+    global _camera_initialized
+    if not _camera_initialized:
+        try:
+            camera.initialize_camera()
+            _camera_initialized = True
+        except RuntimeError as e:
+            logger.error(f"Failed to initialize camera: {e}")
+            raise
 
 
 # ==================== AUTHENTICATION VIEWS ====================
@@ -345,6 +356,9 @@ def face_checkin(request):
 def face_checkin_api(request):
     """API endpoint for face recognition check-in"""
     try:
+        # Ensure camera is initialized
+        ensure_camera_initialized()
+        
         # Perform face recognition
         member_id, confidence, message = face_recognizer.recognize_face()
         
@@ -421,10 +435,18 @@ def face_checkin_api(request):
 
 def video_feed(request):
     """Stream video for face check-in page"""
-    return StreamingHttpResponse(
-        camera.generate_frames(),
-        content_type='multipart/x-mixed-replace; boundary=frame'
-    )
+    try:
+        ensure_camera_initialized()
+        return StreamingHttpResponse(
+            camera.generate_frames(),
+            content_type='multipart/x-mixed-replace; boundary=frame'
+        )
+    except RuntimeError as e:
+        logger.error(f"Camera initialization failed: {e}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Camera is not available'
+        }, status=503)
 
 
 @login_required
@@ -588,6 +610,12 @@ def member_edit(request, member_id):
         return redirect('member_detail', member_id=member.id)
     
     return render(request, 'attendance_app/member_edit.html', {'member': member})
+
+
+@login_required
+def register_member(request):
+    """Redirect to face registration (member registration is done through face registration)"""
+    return redirect('register_face')
 
 
 # ==================== FACE REGISTRATION VIEWS ====================
@@ -946,21 +974,30 @@ def system_health(request):
 def camera_test(request):
     """Test camera functionality"""
     if request.method == 'POST':
-        # Test camera
-        camera_health = check_camera_health()
-        
-        # Try to capture a frame
-        frame = camera.capture_frame()
-        
-        if frame is not None:
-            messages.success(request, 'Camera is working properly')
-        else:
-            messages.error(request, 'Camera test failed')
-        
-        return JsonResponse({
-            'success': frame is not None,
-            'camera_health': camera_health
-        })
+        try:
+            # Test camera
+            ensure_camera_initialized()
+            camera_health = check_camera_health()
+            
+            # Try to capture a frame
+            frame = camera.capture_frame()
+            
+            if frame is not None:
+                messages.success(request, 'Camera is working properly')
+            else:
+                messages.error(request, 'Camera test failed')
+            
+            return JsonResponse({
+                'success': frame is not None,
+                'camera_health': camera_health
+            })
+        except RuntimeError as e:
+            logger.error(f"Camera test failed: {e}")
+            messages.error(request, f'Camera error: {str(e)}')
+            return JsonResponse({
+                'success': False,
+                'camera_health': {'status': 'error', 'message': str(e)}
+            }, status=503)
     
     return render(request, 'attendance_app/camera_test.html')
 
@@ -989,6 +1026,28 @@ def create_backup_view(request):
 
 
 # ==================== API VIEWS ====================
+
+@login_required
+@require_http_methods(["GET"])
+def api_recent_face_checkins(request):
+    """API endpoint for recent face checkins"""
+    limit = int(request.GET.get('limit', 10))
+    
+    recent = LocalAttendance.objects.filter(
+        check_in_method='face'
+    ).select_related('member').order_by('-check_in_time')[:limit]
+    
+    data = []
+    for attendance in recent:
+        data.append({
+            'time': attendance.check_in_time.strftime('%H:%M'),
+            'member': attendance.member.full_name,
+            'belt': attendance.member.get_belt_rank_display(),
+            'confidence': f"{attendance.confidence_score:.1%}" if attendance.confidence_score else 'N/A'
+        })
+    
+    return JsonResponse({'checkins': data})
+
 
 @csrf_exempt
 @require_http_methods(["POST"])

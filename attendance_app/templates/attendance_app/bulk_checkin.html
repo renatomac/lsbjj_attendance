@@ -1,0 +1,102 @@
+{% extends 'attendance_app/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Bulk Check-in{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-users"></i> Bulk Check-in
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    You can check in multiple members at once. Select a date and the members who attended.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group mb-3">
+                        <label for="id_session_date">Date <span class="text-danger">*</span></label>
+                        {{ form.session_date }}
+                        {% if form.session_date.errors %}
+                            <div class="text-danger small mt-1">{{ form.session_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="id_members">Members <span class="text-danger">*</span></label>
+                        <div class="card border-light">
+                            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                {% if form.members %}
+                                    <div class="list-group">
+                                        {% for choice_value, choice_label in form.members.field.choices %}
+                                            <label class="list-group-item">
+                                                <input 
+                                                    type="checkbox" 
+                                                    name="members" 
+                                                    value="{{ choice_value }}"
+                                                    class="form-check-input me-2"
+                                                >
+                                                {{ choice_label }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No members available</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if form.members.errors %}
+                            <div class="text-danger small mt-1">{{ form.members.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="id_notes">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'manual_checkin' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check"></i> Check In Members
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Check-in Options</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Other check-in methods available:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{% url 'manual_checkin' %}" class="btn btn-outline-secondary w-100 mb-2">
+                            <i class="fas fa-keyboard"></i> Manual Check-in
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'face_checkin' %}" class="btn btn-outline-success w-100 mb-2">
+                            <i class="fas fa-camera"></i> Face Recognition
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

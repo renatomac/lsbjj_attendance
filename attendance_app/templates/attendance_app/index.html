@@ -97,8 +97,8 @@
                     <i class="fas fa-chart-line"></i> Today's Check-ins by Hour
                 </h5>
             </div>
-            <div class="card-body">
-                <canvas id="hourlyChart" height="100"></canvas>
+            <div class="card-body" style="position: relative; height: 300px;">
+                <canvas id="hourlyChart" style="position: absolute; width: 100%; height: 100%;"></canvas>
             </div>
         </div>
     </div>
@@ -110,8 +110,8 @@
                     <i class="fas fa-chart-pie"></i> Member Distribution
                 </h5>
             </div>
-            <div class="card-body">
-                <canvas id="memberTypeChart" height="200"></canvas>
+            <div class="card-body" style="position: relative; height: 250px;">
+                <canvas id="memberTypeChart" style="position: absolute; width: 100%; height: 100%;"></canvas>
                 <hr>
                 <div class="text-center">
                     <span class="badge bg-primary">Adults: {{ stats.adults }}</span>
@@ -296,7 +296,7 @@
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
             scales: {
                 y: {
                     beginAtZero: true,
@@ -319,7 +319,12 @@
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
 </script>
