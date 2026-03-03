@@ -30,6 +30,7 @@ urlpatterns = [
     
     # Face registration
     path('face/register/', views.register_face, name='register_face'),
+    path('face/registration/complete/', views.face_registration_complete, name='face_registration_complete'),  
     path('face/status/<int:member_id>/', views.face_registration_status, name='face_registration_status'),
     
     # API endpoints

@@ -1208,3 +1208,7 @@ def test_simple_login(request):
 
 def test_template(request):
     return render(request, 'test/minimal.html')
+
+def face_registration_complete(request):
+    """Display face registration completion page."""
+    return render(request, 'attendance_app/face_registration_complete.html')

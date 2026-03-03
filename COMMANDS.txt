@@ -1,0 +1,3 @@
+# Restart uWSGI to clear any cached templates
+sudo systemctl restart uwsgi-lzbjj
+
