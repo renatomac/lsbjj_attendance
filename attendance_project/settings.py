@@ -172,8 +172,9 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # PythonAnywhere Sync Settings
-PYTHONANYWHERE_URL = os.environ.get('PYTHONANYWHERE_URL', 'https://checkmatlakezurich.com')
-PYTHONANYWHERE_API_KEY = os.environ.get('PYTHONANYWHERE_API_KEY', '')
+PYTHONANYWHERE_USERNAME = 'renatomac'
+PYTHONANYWHERE_URL = os.environ.get('PYTHONANYWHERE_URL', 'https://www.pythonanywhere.com')
+PYTHONANYWHERE_API_KEY = os.environ.get('PYTHONANYWHERE_API_KEY', '3d3ecd321ec80efa11ae97c4d596267ac8e992af')
 SYNC_INTERVAL = 300  # seconds
 MEMBER_SYNC_HOUR = 3  # 3 AM
 

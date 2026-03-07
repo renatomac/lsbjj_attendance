@@ -2,6 +2,7 @@ import requests
 import logging
 from django.conf import settings
 from django.utils import timezone
+from django.db import models
 from attendance_app.models import LocalMember, LocalAttendance
 import json
 
@@ -11,8 +12,10 @@ class PythonAnywhereSync:
     """Sync client for PythonAnywhere CRM"""
     
     def __init__(self):
-        self.api_url = settings.PYTHONANYWHERE_URL
+        self.username = settings.PYTHONANYWHERE_USERNAME
         self.api_key = settings.PYTHONANYWHERE_API_KEY
+        self.base_url = settings.PYTHONANYWHERE_URL
+        self.api_base = f"{self.base_url}/api/v0/user/{self.username}"
         self.headers = {
             'Authorization': f'Token {self.api_key}',
             'Content-Type': 'application/json'
@@ -37,8 +40,9 @@ class PythonAnywhereSync:
             if last_sync:
                 params['updated_after'] = last_sync.isoformat()
             
+            # Correct API endpoint for members
             response = requests.get(
-                f"{self.api_url}/api/members/",
+                f"{self.api_base}/members/",  # Adjust this endpoint based on your actual API
                 headers=self.headers,
                 params=params,
                 timeout=30
@@ -116,14 +120,15 @@ class PythonAnywhereSync:
                 data = {
                     'member_id': member.remote_id,
                     'date': record.session_date.isoformat(),
-                    'check_in_time': record.check_in_time.isoformat(),
+                    'check_in_time': record.check_in_time.isoformat() if record.check_in_time else None,
                     'method': record.check_in_method,
                     'notes': record.notes or '',
                     'confidence': record.confidence_score
                 }
                 
+                # Correct API endpoint for attendance
                 response = requests.post(
-                    f"{self.api_url}/api/attendance/",
+                    f"{self.api_base}/attendance/",  # Adjust this endpoint
                     headers=self.headers,
                     json=data,
                     timeout=10
@@ -136,9 +141,12 @@ class PythonAnywhereSync:
                     record.last_sync_attempt = timezone.now()
                     
                     # Store remote attendance ID if returned
-                    response_data = response.json()
-                    if 'id' in response_data:
-                        record.remote_attendance_id = response_data['id']
+                    try:
+                        response_data = response.json()
+                        if 'id' in response_data:
+                            record.remote_attendance_id = response_data['id']
+                    except:
+                        pass
                     
                     record.save()
                     result['succeeded'] += 1
@@ -166,3 +174,25 @@ class PythonAnywhereSync:
                 logger.error(f"Error syncing attendance: {e}")
         
         return result
+    
+    def test_connection(self):
+        """Test the API connection"""
+        try:
+            # Test with the CPU endpoint from the example
+            response = requests.get(
+                f"{self.api_base}/cpu/",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                print("✅ Connection successful!")
+                print("CPU quota info:", response.json())
+                return True
+            else:
+                print(f"❌ Connection failed: {response.status_code}")
+                print(response.text)
+                return False
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            return False
