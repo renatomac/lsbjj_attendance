@@ -11,6 +11,7 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('', include('attendance_app.urls')),
     path('api/', include('attendance_app.urls_api')),
+    path('sync/', include('attendance_app.urls')), 
 ]
 
 # Serve media files in development

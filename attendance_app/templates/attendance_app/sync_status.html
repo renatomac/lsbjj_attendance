@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sync Status</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status-card { 
+            background-color: #f8f9fa; 
+            border: 1px solid #dee2e6;
+            border-radius: 5px; 
+            padding: 15px; 
+            margin-bottom: 20px;
+        }
+        .online { color: green; font-weight: bold; }
+        .offline { color: red; font-weight: bold; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+        th, td { 
+            border: 1px solid #dee2e6; 
+            padding: 8px; 
+            text-align: left; 
+        }
+        th { background-color: #f2f2f2; }
+        .pending { color: orange; font-weight: bold; }
+        .success { color: green; }
+        .failed { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Sync Status Dashboard</h1>
+    
+    <div class="status-card">
+        <h2>System Status</h2>
+        <p><strong>Network Status:</strong> 
+            <span class="{% if online_status %}online{% else %}offline{% endif %}">
+                {% if online_status %}Online{% else %}Offline{% endif %}
+            </span>
+        </p>
+        <p><strong>Pending Attendance Records:</strong> 
+            <span class="pending">{{ pending_attendance }}</span>
+        </p>
+        <p><strong>Pending Queue Items:</strong> 
+            <span class="pending">{{ pending_queue }}</span>
+        </p>
+    </div>
+    
+    <div class="status-card">
+        <h2>Last Sync Information</h2>
+        {% if last_sync %}
+            <p><strong>Last Successful Sync:</strong> {{ last_sync.start_time }}</p>
+            <p><strong>Records Synced:</strong> {{ last_sync.records_synced }}</p>
+        {% else %}
+            <p>No successful syncs yet</p>
+        {% endif %}
+        
+        {% if last_attempt %}
+            <p><strong>Last Attempt:</strong> {{ last_attempt.start_time }}</p>
+            <p><strong>Status:</strong> 
+                <span class="{% if last_attempt.status == 'success' %}success{% else %}failed{% endif %}">
+                    {{ last_attempt.status }}
+                </span>
+            </p>
+            {% if last_attempt.error_message %}
+                <p><strong>Error:</strong> {{ last_attempt.error_message }}</p>
+            {% endif %}
+        {% endif %}
+    </div>
+    
+    <div class="status-card">
+        <h2>Recent Sync History (Last 50)</h2>
+        {% if sync_logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Status</th>
+                        <th>Records Synced</th>
+                        <th>Error Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in sync_logs %}
+                    <tr>
+                        <td>{{ log.start_time }}</td>
+                        <td>{{ log.end_time|default:"In progress..." }}</td>
+                        <td class="{% if log.status == 'success' %}success{% else %}failed{% endif %}">
+                            {{ log.status }}
+                        </td>
+                        <td>{{ log.records_synced }}</td>
+                        <td>{{ log.error_message|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No sync history available</p>
+        {% endif %}
+    </div>
+    
+    <p><a href="{% url 'admin:index' %}">Back to Admin</a></p>
+</body>
+</html>

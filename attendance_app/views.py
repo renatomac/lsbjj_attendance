@@ -822,6 +822,29 @@ def sync_status(request):
     # Network status
     online_status = cache.get('online_status', True)
     
+    # Determine success/failure for the template
+    success = online_status and pending_attendance == 0 and pending_queue == 0
+    
+    # Create message
+    if success:
+        message = "All systems operational. No pending sync items."
+    else:
+        issues = []
+        if not online_status:
+            issues.append("offline")
+        if pending_attendance > 0:
+            issues.append(f"{pending_attendance} pending attendance records")
+        if pending_queue > 0:
+            issues.append(f"{pending_queue} pending queue items")
+        message = f"Sync pending: {', '.join(issues)}"
+    
+    # Create sync details
+    sync_details = f"""
+Last sync: {last_attempt.start_time if last_attempt else 'Never'}
+Status: {last_attempt.status if last_attempt else 'N/A'}
+Records synced: {last_attempt.records_synced if last_attempt else 0}
+    """.strip()
+    
     context = {
         'sync_logs': sync_logs,
         'pending_attendance': pending_attendance,
@@ -829,10 +852,13 @@ def sync_status(request):
         'last_sync': last_sync,
         'last_attempt': last_attempt,
         'online_status': online_status,
+        # Add these for your template
+        'success': success,
+        'message': message,
+        'sync_details': sync_details,
     }
     
     return render(request, 'attendance_app/sync_status.html', context)
-
 
 @login_required
 @require_http_methods(["POST"])
