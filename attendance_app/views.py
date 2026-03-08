@@ -28,7 +28,7 @@ from .forms import (
 )
 from face_recognition.camera import CameraManager, FaceRecognizer
 from face_recognition.utils import check_camera_health
-from sync.sync_members import PythonAnywhereSync
+from sync.sync_client import PythonAnywhereSync
 from .utils import (
     get_system_health, create_backup, restore_backup,
     generate_attendance_report, export_to_csv

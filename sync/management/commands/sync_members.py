@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
-from sync.sync_client import PythonAnywhereSync
+from sync.sync_client import PythonAnywhereSync  
 from attendance_app.models import SyncLog
+from django.utils import timezone
 import logging
 
 logger = logging.getLogger(__name__)

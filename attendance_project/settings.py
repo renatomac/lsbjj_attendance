@@ -47,8 +47,14 @@ INSTALLED_APPS = [
     
     # Local apps
     'attendance_app',
+    'django_crontab',
+    'face_recognition',
+    'sync',
 ]
 
+CRONJOBS = [
+    ('*/15 * * * *', 'django.core.management.call_command', ['retry_failed_syncs']),
+]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -117,9 +123,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'America/Chicago'  # Adjust for your location
-USE_I18N = True
 USE_TZ = True
+TIME_ZONE = 'America/Chicago'  
+USE_I18N = True
+
 
 
 
@@ -172,11 +179,14 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # PythonAnywhere Sync Settings
-PYTHONANYWHERE_USERNAME = 'renatomac'
-PYTHONANYWHERE_URL = os.environ.get('PYTHONANYWHERE_URL', 'https://www.pythonanywhere.com')
-PYTHONANYWHERE_API_KEY = os.environ.get('PYTHONANYWHERE_API_KEY', '3d3ecd321ec80efa11ae97c4d596267ac8e992af')
+PYTHONANYWHERE_PASSWORD = '0435@omgR'
+PYTHONANYWHERE_URL = 'https://www.checkmatlakezurich.com'
+PYTHONANYWHERE_API_KEY = 'X20Ocl9osibUfV1vd5DHtPH3hKHspZUR57H5mhiG0RFAVmMhMQ5V3o1KfPx4-aPX'  # Your new token
+PYTHONANYWHERE_USERNAME = 'renato.2208@gmail.com'
 SYNC_INTERVAL = 300  # seconds
-MEMBER_SYNC_HOUR = 3  # 3 AM
+MEMBER_SYNC_HOUR = 3  # 3 AMexi
+SYNC_BATCH_SIZE = 50
+SYNC_RETRY_INTERVAL = 300  # 5 minutes in seconds
 
 # Face Recognition Settings
 FACE_RECOGNITION_THRESHOLD = 0.6

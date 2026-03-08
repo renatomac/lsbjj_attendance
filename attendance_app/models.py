@@ -186,7 +186,16 @@ class LocalAttendance(models.Model):
             
             self.photo_path = filepath
             self.save(update_fields=['photo_path'])
-
+            
+    remote_attendance_id = models.IntegerField(null=True, blank=True)
+    sync_attempts = models.IntegerField(default=0)
+    sync_error = models.TextField(null=True, blank=True)
+    last_sync_attempt = models.DateTimeField(null=True, blank=True)
+    next_sync_attempt = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        # Prevent duplicate syncs
+        unique_together = ['member', 'session_date', 'check_in_time']
 
 class SyncLog(models.Model):
     """Track sync operations with PythonAnywhere"""

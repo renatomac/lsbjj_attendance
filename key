@@ -1,0 +1,28 @@
+import requests
+
+response = requests.post(
+    'https://www.checkmatlakezurich.com/api/token/obtain/',  # Note the /obtain/
+    json={
+        'username': 'renato.2208@gmail.com',
+        'password': '0435@omgR'
+    }
+)
+
+if response.status_code == 200:
+    token = response.json().get('token')
+    print(f"✅ Your API token: {token}")
+    
+    # Test the token by fetching members
+    headers = {'Authorization': f'Token {token}'}
+    members_response = requests.get(
+        'https://www.checkmatlakezurich.com/api/members/',
+        headers=headers
+    )
+    
+    if members_response.status_code == 200:
+        print("✅ Token works! Found members:", len(members_response.json()))
+    else:
+        print(f"❌ Token failed: {members_response.status_code}")
+else:
+    print(f"❌ Error: {response.status_code}")
+    print(response.text)
